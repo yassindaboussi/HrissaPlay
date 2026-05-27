@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HrissaPlay - Tunisian Radios</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="../src/renderer/styles/main.css">
+  <link rel="stylesheet" href="../src/renderer/styles/player.css">
+  <link rel="stylesheet" href="../src/renderer/styles/visualizer.css">
+</head>
+<body>
+  <!-- Custom Window Controls -->
+  <div id="window-controls">
+    <div class="title">HrissaPlay <span id="version-display" style="font-size: 0.75rem; opacity: 0.7; margin-left: 0.5rem;">v1.1.0</span></div>
+    <div class="right">
+      <button class="window-btn" id="minimize-btn"><i class="fas fa-minus"></i></button>
+      <button class="window-btn" id="maximize-btn"><i class="far fa-square"></i></button>
+      <button class="window-btn" id="close-btn"><i class="fas fa-times"></i></button>
+    </div>
+  </div>
+
+  <div id="content">
+    <header>
+      <h1>HrissaPlay</h1>
+      <p class="subtitle">استمع إلى أفضل الإذاعات التونسية مباشرة</p>
+    </header>
+
+    <div class="stations-container">
+      <div class="grid" id="stations"></div>
+    </div>
+
+    <div id="player">
+      <!-- Section 1: Station Info + Status -->
+      <div class="player-section player-info-section">
+        <div class="current-logo" id="current-logo">
+          <i class="fas fa-radio" style="color: var(--text-secondary); font-size: 1.2rem;"></i>
+        </div>
+        <div class="info-group">
+          <div id="now-playing">اختر محطة راديو</div>
+          <div class="status-row">
+            <div class="status-indicator" id="status-indicator"></div>
+            <span class="status-text" id="status-text">جاهز</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: Playback Controls (Center) -->
+      <div class="player-section player-controls">
+        <button class="control-btn secondary" id="restart-btn" title="Restart Live Stream">
+          <i class="fas fa-redo-alt"></i>
+        </button>
+        <button class="control-btn primary" id="play-btn" title="Play">
+          <i class="fas fa-play"></i>
+        </button>
+        <button class="control-btn primary" id="pause-btn" title="Pause" style="display: none;">
+          <i class="fas fa-pause"></i>
+        </button>
+        <button class="control-btn danger" id="stop-btn" title="Stop">
+          <i class="fas fa-stop"></i>
+        </button>
+      </div>
+
+      <!-- Section 3: Visualizer -->
+      <div class="player-section visualizer-section">
+        <div class="visualizer-container">
+          <div id="wave-visualizer"></div>
+        </div>
+      </div>
+
+      <!-- Section 4: Volume Control -->
+      <div class="player-section volume-section">
+        <button class="volume-icon-btn" id="mute-btn" title="Mute / Unmute">
+          <i class="fas fa-volume-up" id="volume-icon"></i>
+        </button>
+        <div class="volume-slider-wrap">
+          <input type="range" id="volume-slider" class="volume-slider" min="0" max="100" value="80">
+          <div class="volume-fill" id="volume-fill" style="width: 80%"></div>
+        </div>
+        <span class="volume-pct" id="volume-pct">80%</span>
+      </div>
+    </div>
+  </div>
+
+  <audio id="audio" crossorigin="anonymous"></audio>
+
+  <script src="../src/renderer/scripts/version.js"></script>
+  <script src="../src/renderer/scripts/updater-ui.js"></script>
+  <script src="../src/renderer/scripts/stations.js"></script>
+  <script src="../src/renderer/scripts/visualizer.js"></script>
+  <script src="../src/renderer/scripts/player.js"></script>
+  <script src="../src/renderer/scripts/ui.js"></script>
+</body>
+</html>

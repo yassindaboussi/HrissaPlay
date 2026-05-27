@@ -1,0 +1,160 @@
+/* Wave Visualizer */
+.visualizer-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 40px;
+  width: 100%;
+  flex: 1;
+  min-width: 80px;
+}
+
+#wave-visualizer {
+  width: 100%;
+  min-width: 60px;
+  max-width: 320px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.wave-bar {
+  width: 3px;
+  background: linear-gradient(to top, var(--accent), var(--accent-light));
+  border-radius: 2px;
+  opacity: 0.8;
+  box-shadow: 0 0 6px rgba(255, 62, 108, 0.4);
+  flex-shrink: 0;
+}
+
+/* Equalizer Visualizer */
+.equalizer-bar {
+  width: 4px;
+  background: linear-gradient(to top, var(--accent), var(--accent-light));
+  border-radius: 2px;
+  opacity: 0.8;
+  box-shadow: 0 0 4px rgba(255, 62, 108, 0.3);
+  flex-shrink: 0;
+}
+
+/* Spectrum Visualizer */
+.spectrum-dot {
+  width: 3px;
+  height: 3px;
+  background: var(--accent);
+  border-radius: 50%;
+  position: relative;
+  box-shadow: 0 0 4px rgba(255, 62, 108, 0.4);
+  flex-shrink: 0;
+}
+
+.spectrum-dot::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  background: var(--accent-light);
+  border-radius: 50%;
+  opacity: 0.3;
+}
+
+/* Responsive Visualizer */
+@media (max-width: 1200px) {
+  #wave-visualizer {
+    max-width: 250px;
+  }
+}
+
+@media (max-width: 900px) {
+  #wave-visualizer {
+    max-width: 100%;
+    min-width: 60px;
+  }
+}
+
+@media (max-width: 768px) {
+  .visualizer-container {
+    min-width: 70px;
+  }
+  
+  #wave-visualizer {
+    min-width: 50px;
+  }
+}
+
+@media (max-width: 600px) {
+  .visualizer-container {
+    height: 35px;
+    min-width: 60px;
+  }
+  
+  #wave-visualizer {
+    height: 35px;
+    max-width: 100%;
+    min-width: 50px;
+  }
+  
+  .wave-bar {
+    width: 2.5px;
+  }
+  
+  .equalizer-bar {
+    width: 3px;
+  }
+}
+
+@media (max-width: 480px) {
+  .visualizer-container {
+    height: 32px;
+    min-width: 50px;
+  }
+  
+  #wave-visualizer {
+    height: 32px;
+    min-width: 40px;
+  }
+  
+  .wave-bar {
+    width: 2px;
+  }
+  
+  .equalizer-bar {
+    width: 2.5px;
+  }
+  
+  .spectrum-dot {
+    width: 2px;
+    height: 2px;
+  }
+}
+
+@media (max-width: 360px) {
+  .visualizer-container {
+    height: 30px;
+    min-width: 40px;
+  }
+  
+  #wave-visualizer {
+    height: 30px;
+    min-width: 35px;
+  }
+  
+  .wave-bar {
+    width: 2px;
+  }
+  
+  .equalizer-bar {
+    width: 2px;
+  }
+  
+  .spectrum-dot {
+    width: 2px;
+    height: 2px;
+  }
+}
