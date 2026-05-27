@@ -9,7 +9,8 @@
     "url": "https://github.com/yassindaboussi/HrissaPlay"
   },
   "author": {
-    "name": "Yassin Daboussi"
+    "name": "Yassin Daboussi",
+	"email":"yassin.daboussi@esprit.tn"
   },
   "scripts": {
     "start": "electron .",
