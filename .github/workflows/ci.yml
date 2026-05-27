@@ -32,7 +32,15 @@ jobs:
       continue-on-error: true
 
     - name: Build application
-      run: npm run build --if-present
+      run: |
+        if [ "$RUNNER_OS" = "Windows" ]; then
+          npm run build:win
+        elif [ "$RUNNER_OS" = "macOS" ]; then
+          npm run build:mac
+        else
+          npm run build:linux
+        fi
+      shell: bash
 
     - name: Package for distribution
       run: npm run dist --if-present
