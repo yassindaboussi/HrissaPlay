@@ -9,84 +9,54 @@ permissions:
   contents: write
 
 jobs:
-  create-release:
-    runs-on: ubuntu-latest
-    outputs:
-      upload_url: ${{ steps.create_release.outputs.upload_url }}
-    steps:
-      - name: Create Release
-        id: create_release
-        uses: softprops/action-gh-release@v2
-        with:
-          draft: false
-          prerelease: false
-          generate_release_notes: true
-
   build-windows:
-    needs: create-release
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-      
+
       - run: npm ci
-      
-      - run: npm run build:win
+
+      # --publish always builds the installer + latest.yml and uploads both to GitHub Release
+      - run: npx electron-builder --win --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
-      
-      - name: Upload Windows artifacts
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*.exe
 
   build-macos:
-    needs: create-release
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-      
+
       - run: npm ci
-      
-      - run: npm run build:mac
+
+      - run: npx electron-builder --mac --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           SKIP_CODE_SIGN: true
-      
-      - name: Upload macOS artifacts
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/*.dmg
 
   build-linux:
-    needs: create-release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
       - uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
-      
+
       - run: npm ci
-      
-      - run: npm run build:linux
+
+      - run: npx electron-builder --linux --publish always
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Upload Linux artifacts
-        uses: softprops/action-gh-release@v2
-        with:
-          files: dist/HrissaPlay*.AppImage
