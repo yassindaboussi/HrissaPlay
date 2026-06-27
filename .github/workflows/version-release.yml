@@ -1,0 +1,208 @@
+name: Version & Release
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'package.json'
+      - '.github/workflows/**'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  version-and-tag:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Get current version
+        id: version
+        run: |
+          CURRENT_VERSION=$(node -e "console.log(require('./package.json').version)")
+          TAG="v${CURRENT_VERSION}"
+          echo "version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "Current version: ${CURRENT_VERSION}"
+
+      - name: Check if tag exists
+        id: tag-exists
+        run: |
+          if git rev-parse "${{ steps.version.outputs.tag }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create Git tag
+        if: steps.tag-exists.outputs.exists == 'false'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin ${{ steps.version.outputs.tag }}
+
+  build-and-release:
+    needs: version-and-tag
+    if: needs.version-and-tag.outputs.tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version-and-tag.outputs.tag }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Create Release Notes
+        id: release-notes
+        run: |
+          VERSION=${{ needs.version-and-tag.outputs.version }}
+          CHANGELOG=$(git log --oneline --no-decorate $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")..HEAD | head -20)
+          
+          RELEASE_NOTES="## HrissaPlay v${VERSION}
+
+          ### 📦 Release Information
+          - **Version**: ${VERSION}
+          - **Release Date**: $(date +'%Y-%m-%d')
+          - **Platform Support**: Windows, macOS, Linux
+
+          ### 📝 Changes
+          \`\`\`
+          ${CHANGELOG}
+          \`\`\`
+
+          ### 🚀 Downloads
+          Choose the installer for your platform below.
+
+          ### 📋 Release Notes
+          - Enhanced stability across all platforms
+          - Improved performance
+          - Latest security updates
+
+          ### 💬 Feedback
+          Found an issue? [Open an issue on GitHub](https://github.com/yassindaboussi/HrissaPlay/issues)"
+          
+          echo "notes<<EOF" >> $GITHUB_OUTPUT
+          echo "$RELEASE_NOTES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.version-and-tag.outputs.tag }}
+          body: ${{ steps.release-notes.outputs.notes }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-windows:
+    needs: version-and-tag
+    if: needs.version-and-tag.outputs.tag != ''
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version-and-tag.outputs.tag }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build Windows
+        run: npx electron-builder --win --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-artifacts
+          path: dist/*.exe
+          retention-days: 30
+
+  build-macos:
+    needs: version-and-tag
+    if: needs.version-and-tag.outputs.tag != ''
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version-and-tag.outputs.tag }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build macOS
+        run: npx electron-builder --mac --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CSC_IDENTITY_AUTO_DISCOVERY: false
+          SKIP_CODE_SIGN: true
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-artifacts
+          path: dist/*.dmg
+          retention-days: 30
+
+  build-linux:
+    needs: version-and-tag
+    if: needs.version-and-tag.outputs.tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.version-and-tag.outputs.tag }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - run: npm ci
+
+      - name: Build Linux
+        run: npx electron-builder --linux --publish always
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-artifacts
+          path: dist/HrissaPlay*.AppImage
+          retention-days: 30
+
+  notify-release:
+    needs: [version-and-tag, build-windows, build-macos, build-linux]
+    if: always() && needs.version-and-tag.outputs.tag != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Release Notification
+        run: |
+          echo "✅ Release ${{ needs.version-and-tag.outputs.tag }} completed!"
+          echo "📥 Download artifacts from: https://github.com/yassindaboussi/HrissaPlay/releases/tag/${{ needs.version-and-tag.outputs.tag }}"
