@@ -28,7 +28,7 @@
     "electron-log": "^4.4.8"
   },
   "devDependencies": {
-    "electron": "latest",
+    "electron": "^26.0.0",
     "electron-builder": "latest"
   },
   "overrides": {
