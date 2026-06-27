@@ -73,7 +73,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: windows
-          path: dist/**/*
+          path: |
+            dist/*.exe
+            dist/*.exe.blockmap
+            dist/latest.yml
+          if-no-files-found: error
 
   build-macos:
     needs: version-and-tag
@@ -100,7 +104,13 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos
-          path: dist/**/*
+          path: |
+            dist/*.dmg
+            dist/*.dmg.blockmap
+            dist/*.zip
+            dist/*.zip.blockmap
+            dist/latest-mac.yml
+          if-no-files-found: error
 
   build-linux:
     needs: version-and-tag
@@ -124,7 +134,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: linux
-          path: dist/**/*
+          path: |
+            dist/*.AppImage
+            dist/*.deb
+            dist/latest-linux.yml
+          if-no-files-found: error
 
   create-release:
     needs: [version-and-tag, build-windows, build-macos, build-linux]
