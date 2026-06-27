@@ -10,7 +10,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   version-and-tag:
@@ -31,7 +30,6 @@ jobs:
           TAG="v${CURRENT_VERSION}"
           echo "version=${CURRENT_VERSION}" >> $GITHUB_OUTPUT
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
-          echo "Current version: ${CURRENT_VERSION}"
 
       - name: Check if tag exists
         id: tag-exists
@@ -50,65 +48,6 @@ jobs:
           git tag -a ${{ steps.version.outputs.tag }} -m "Release ${{ steps.version.outputs.tag }}"
           git push origin ${{ steps.version.outputs.tag }}
 
-  build-and-release:
-    needs: version-and-tag
-    if: needs.version-and-tag.outputs.tag != ''
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.version-and-tag.outputs.tag }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - run: npm install
-
-      - name: Create Release Notes
-        id: release-notes
-        run: |
-          VERSION=${{ needs.version-and-tag.outputs.version }}
-          CHANGELOG=$(git log --oneline --no-decorate $(git describe --tags --abbrev=0 2>/dev/null || echo "HEAD~10")..HEAD | head -20)
-          
-          RELEASE_NOTES="## HrissaPlay v${VERSION}
-
-          ### 📦 Release Information
-          - **Version**: ${VERSION}
-          - **Release Date**: $(date +'%Y-%m-%d')
-          - **Platform Support**: Windows, macOS, Linux
-
-          ### 📝 Changes
-          \`\`\`
-          ${CHANGELOG}
-          \`\`\`
-
-          ### 🚀 Downloads
-          Choose the installer for your platform below.
-
-          ### 📋 Release Notes
-          - Enhanced stability across all platforms
-          - Improved performance
-          - Latest security updates
-
-          ### 💬 Feedback
-          Found an issue? [Open an issue on GitHub](https://github.com/yassindaboussi/HrissaPlay/issues)"
-          
-          echo "notes<<EOF" >> $GITHUB_OUTPUT
-          echo "$RELEASE_NOTES" >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          tag_name: ${{ needs.version-and-tag.outputs.tag }}
-          body: ${{ steps.release-notes.outputs.notes }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   build-windows:
     needs: version-and-tag
     if: needs.version-and-tag.outputs.tag != ''
@@ -125,17 +64,15 @@ jobs:
       - run: npm install
 
       - name: Build Windows
-        run: npx electron-builder --win --publish always
+        run: npx electron-builder --win
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
-      - name: Upload artifacts
+      - name: Upload Windows artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: windows-artifacts
-          path: dist/*.exe
-          retention-days: 30
+          name: windows
+          path: dist/**/*
 
   build-macos:
     needs: version-and-tag
@@ -153,18 +90,16 @@ jobs:
       - run: npm install
 
       - name: Build macOS
-        run: npx electron-builder --mac --publish always
+        run: npx electron-builder --mac
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
           SKIP_CODE_SIGN: true
 
-      - name: Upload artifacts
+      - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: macos-artifacts
-          path: dist/*.dmg
-          retention-days: 30
+          name: macos
+          path: dist/**/*
 
   build-linux:
     needs: version-and-tag
@@ -182,23 +117,66 @@ jobs:
       - run: npm install
 
       - name: Build Linux
-        run: npx electron-builder --linux --publish always
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx electron-builder --linux
 
-      - name: Upload artifacts
+      - name: Upload Linux artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: linux-artifacts
-          path: dist/HrissaPlay*.AppImage
-          retention-days: 30
+          name: linux
+          path: dist/**/*
 
-  notify-release:
+  create-release:
     needs: [version-and-tag, build-windows, build-macos, build-linux]
     if: always() && needs.version-and-tag.outputs.tag != ''
     runs-on: ubuntu-latest
     steps:
-      - name: Release Notification
-        run: |
-          echo "✅ Release ${{ needs.version-and-tag.outputs.tag }} completed!"
-          echo "📥 Download artifacts from: https://github.com/yassindaboussi/HrissaPlay/releases/tag/${{ needs.version-and-tag.outputs.tag }}"
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: windows
+          path: release-artifacts
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: macos
+          path: release-artifacts
+
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux
+          path: release-artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ needs.version-and-tag.outputs.tag }}
+          body: |
+            ## 🎉 HrissaPlay v${{ needs.version-and-tag.outputs.version }}
+            
+            ### 🖥️ Downloads
+            All installers are included below for Windows, macOS, and Linux.
+            
+            ### ✨ Features
+            - 🎵 Stream Tunisian radio stations
+            - 🔄 Auto-update support
+            - 🌍 Cross-platform support
+            - 💾 Save favorite stations
+            
+            ### 🚀 Installation
+            1. Download the installer for your OS
+            2. Run the installer
+            3. Launch HrissaPlay and enjoy!
+            
+            ### 🐛 Found a bug?
+            [Report it here](https://github.com/yassindaboussi/HrissaPlay/issues)
+          files: release-artifacts/**/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

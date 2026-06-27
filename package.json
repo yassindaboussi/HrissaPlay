@@ -1,6 +1,6 @@
 {
   "name": "hrissaplay",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "HrissaPlay - Tunisian Radios Desktop Player",
   "main": "src/main/main.js",
   "homepage": "./",
