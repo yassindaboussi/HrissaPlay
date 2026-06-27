@@ -29,10 +29,7 @@
   },
   "devDependencies": {
     "electron": "^26.0.0",
-    "electron-builder": "latest"
-  },
-  "overrides": {
-    "@noble/hashes": "1.3.3"
+    "electron-builder": "^26.15.0"
   },
   "build": {
     "appId": "com.hrissaplay.app",

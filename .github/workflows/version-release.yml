@@ -65,7 +65,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - run: npm ci
+      - run: npm install
 
       - name: Create Release Notes
         id: release-notes
@@ -124,7 +124,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - run: npm ci
+      - run: npm install
 
       - name: Build Windows
         run: npx electron-builder --win --publish always
@@ -153,7 +153,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - run: npm ci
+      - run: npm install
 
       - name: Build macOS
         run: npx electron-builder --mac --publish always
@@ -183,7 +183,7 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - run: npm ci
+      - run: npm install
 
       - name: Build Linux
         run: npx electron-builder --linux --publish always
